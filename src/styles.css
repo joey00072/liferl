@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────
+   Color theory palette
+   Rule: 60% neutral · 30% surface · 10% emerald accent
+   
+   Light mode  → slightly cool blue-white (hsl 210°) — crisp, not beige
+   Dark mode   → deep midnight navy (hsl 224°) — premium, not charcoal
+   Midtones    → consistent 213-218° hue across all steps
+   
+   Emerald accent stays warm-green (152°); the complementary temperature
+   contrast (cool navy bg ↔ warm green accent) is intentional.
+   ───────────────────────────────────────────────────────────────── */
+@theme {
+  --color-zinc-50:  var(--zinc-50);
+  --color-zinc-100: var(--zinc-100);
+  --color-zinc-200: var(--zinc-200);
+  --color-zinc-300: var(--zinc-300);
+  --color-zinc-400: var(--zinc-400);
+  --color-zinc-500: var(--zinc-500);
+  --color-zinc-600: var(--zinc-600);
+  --color-zinc-700: var(--zinc-700);
+  --color-zinc-800: var(--zinc-800);
+  --color-zinc-900: var(--zinc-900);
+  --color-zinc-950: var(--zinc-950);
+
+  --color-emerald-100: var(--accent-100);
+  --color-emerald-200: var(--accent-200);
+  --color-emerald-300: var(--accent-300);
+  --color-emerald-400: var(--accent-400);
+  --color-emerald-500: var(--accent-500);
+  --color-emerald-600: var(--accent-600);
+  --color-emerald-800: var(--accent-800);
+  --color-emerald-900: var(--accent-900);
+}
+
+:root {
+  --zinc-50:  hsl(214, 15%, 96.5%);
+  --zinc-100: hsl(214, 13%, 93%);
+  --zinc-200: hsl(214, 11%, 87%);
+  --zinc-300: hsl(214, 9%, 78%);
+  --zinc-400: hsl(214, 8%, 62%);
+  --zinc-500: hsl(214, 7%, 48%);
+  --zinc-600: hsl(214, 8%, 37%);
+  --zinc-700: hsl(214, 10%, 28%);
+  --zinc-800: hsl(214, 12%, 21%);
+  --zinc-900: hsl(214, 14%, 15%);
+  --zinc-950: hsl(214, 16%, 11%);
+
+  --accent-100: hsl(152, 81%, 94%);
+  --accent-200: hsl(152, 76%, 86%);
+  --accent-300: hsl(152, 70%, 72%);
+  --accent-400: hsl(152, 65%, 57%);
+  --accent-500: hsl(152, 69%, 47%);
+  --accent-600: hsl(152, 76%, 38%);
+  --accent-800: hsl(152, 81%, 21%);
+  --accent-900: hsl(152, 85%, 13%);
+
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  /* Soft dark slate text and soft cool-gray background */
+  color:      var(--zinc-950);
+  background: var(--zinc-50);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark {
+  --zinc-50:  hsl(210, 30%, 98%);
+  --zinc-100: hsl(210, 24%, 95%);
+  --zinc-200: hsl(210, 18%, 88%);
+  --zinc-300: hsl(211, 15%, 78%);
+  --zinc-400: hsl(213, 11%, 60%);
+  --zinc-500: hsl(214,  9%, 47%);
+  --zinc-600: hsl(215, 10%, 35%);
+  --zinc-700: hsl(219, 18%, 23%);
+  --zinc-800: hsl(221, 23%, 14%);
+  --zinc-900: hsl(223, 27%, 9%);
+  --zinc-950: hsl(225, 32%, 5%);
+
+  --accent-100: hsl(152, 81%, 94%);
+  --accent-200: hsl(152, 76%, 86%);
+  --accent-300: hsl(152, 70%, 72%);
+  --accent-400: hsl(152, 65%, 57%);
+  --accent-500: hsl(152, 69%, 47%);
+  --accent-600: hsl(152, 76%, 38%);
+  --accent-800: hsl(152, 81%, 21%);
+  --accent-900: hsl(152, 85%, 13%);
+
+  color-scheme: dark;
+  /* Midnight navy background and clean off-white text */
+  background: var(--zinc-950);
+  color:      var(--zinc-50);
+}
+
+/* ── Theme: Amethyst (Rose & Lavender) ── */
+:root[data-theme="amethyst"] {
+  --zinc-50:  hsl(275, 10%, 96.5%);
+  --zinc-100: hsl(275, 9%, 93%);
+  --zinc-200: hsl(275, 8%, 87%);
+  --zinc-300: hsl(275, 7%, 78%);
+  --zinc-400: hsl(275, 6%, 62%);
+  --zinc-500: hsl(275, 5%, 48%);
+  --zinc-600: hsl(275, 6%, 37%);
+  --zinc-700: hsl(275, 8%, 28%);
+  --zinc-800: hsl(275, 10%, 21%);
+  --zinc-900: hsl(275, 12%, 15%);
+  --zinc-950: hsl(275, 14%, 11%);
+
+  --accent-100: hsl(270, 70%, 95%);
+  --accent-200: hsl(270, 65%, 88%);
+  --accent-300: hsl(270, 60%, 76%);
+  --accent-400: hsl(270, 55%, 62%);
+  --accent-500: hsl(270, 59%, 52%);
+  --accent-600: hsl(270, 64%, 44%);
+  --accent-800: hsl(270, 70%, 25%);
+  --accent-900: hsl(270, 75%, 16%);
+}
+.dark[data-theme="amethyst"],
+.dark [data-theme="amethyst"] {
+  --zinc-50:  hsl(275, 20%, 98%);
+  --zinc-100: hsl(275, 16%, 95%);
+  --zinc-200: hsl(275, 12%, 88%);
+  --zinc-300: hsl(275, 10%, 78%);
+  --zinc-400: hsl(275, 8%, 60%);
+  --zinc-500: hsl(275, 8%, 47%);
+  --zinc-600: hsl(275, 9%, 35%);
+  --zinc-700: hsl(275, 12%, 23%);
+  --zinc-800: hsl(275, 15%, 14%);
+  --zinc-900: hsl(275, 18%, 9%);
+  --zinc-950: hsl(275, 22%, 5%);
+
+  --accent-100: hsl(270, 70%, 95%);
+  --accent-200: hsl(270, 65%, 88%);
+  --accent-300: hsl(270, 60%, 76%);
+  --accent-400: hsl(270, 55%, 62%);
+  --accent-500: hsl(270, 59%, 52%);
+  --accent-600: hsl(270, 64%, 44%);
+  --accent-800: hsl(270, 70%, 25%);
+  --accent-900: hsl(270, 75%, 16%);
+}
+
+/* ── Theme: Sage (Olive / Forest Green) ── */
+:root[data-theme="sage"] {
+  --zinc-50:  hsl(100, 8%, 96.5%);
+  --zinc-100: hsl(100, 7%, 93%);
+  --zinc-200: hsl(100, 6%, 87%);
+  --zinc-300: hsl(100, 5%, 78%);
+  --zinc-400: hsl(100, 5%, 62%);
+  --zinc-500: hsl(100, 5%, 48%);
+  --zinc-600: hsl(100, 6%, 37%);
+  --zinc-700: hsl(100, 7%, 28%);
+  --zinc-800: hsl(100, 8%, 21%);
+  --zinc-900: hsl(100, 10%, 15%);
+  --zinc-950: hsl(100, 12%, 11%);
+
+  --accent-100: hsl(142, 50%, 94%);
+  --accent-200: hsl(142, 45%, 86%);
+  --accent-300: hsl(142, 40%, 70%);
+  --accent-400: hsl(142, 38%, 56%);
+  --accent-500: hsl(142, 42%, 44%);
+  --accent-600: hsl(142, 48%, 35%);
+  --accent-800: hsl(142, 52%, 20%);
+  --accent-900: hsl(142, 55%, 12%);
+}
+.dark[data-theme="sage"],
+.dark [data-theme="sage"] {
+  --zinc-50:  hsl(100, 12%, 98%);
+  --zinc-100: hsl(100, 10%, 95%);
+  --zinc-200: hsl(100, 8%, 88%);
+  --zinc-300: hsl(100, 7%, 78%);
+  --zinc-400: hsl(100, 6%, 60%);
+  --zinc-500: hsl(100, 6%, 47%);
+  --zinc-600: hsl(100, 7%, 35%);
+  --zinc-700: hsl(105, 10%, 22%);
+  --zinc-800: hsl(110, 12%, 14%);
+  --zinc-900: hsl(115, 14%, 9%);
+  --zinc-950: hsl(120, 16%, 5%);
+
+  --accent-100: hsl(142, 50%, 94%);
+  --accent-200: hsl(142, 45%, 86%);
+  --accent-300: hsl(142, 40%, 70%);
+  --accent-400: hsl(142, 38%, 56%);
+  --accent-500: hsl(142, 42%, 44%);
+  --accent-600: hsl(142, 48%, 35%);
+  --accent-800: hsl(142, 52%, 20%);
+  --accent-900: hsl(142, 55%, 12%);
+}
+
+/* ── Theme: Amber (Autumn / Oak) ── */
+:root[data-theme="amber"] {
+  --zinc-50:  hsl(35, 10%, 96.5%);
+  --zinc-100: hsl(35, 9%, 93%);
+  --zinc-200: hsl(35, 8%, 87%);
+  --zinc-300: hsl(35, 7%, 78%);
+  --zinc-400: hsl(35, 6%, 62%);
+  --zinc-500: hsl(35, 5%, 48%);
+  --zinc-600: hsl(35, 6%, 37%);
+  --zinc-700: hsl(35, 8%, 28%);
+  --zinc-800: hsl(35, 10%, 21%);
+  --zinc-900: hsl(35, 12%, 15%);
+  --zinc-950: hsl(35, 14%, 11%);
+
+  --accent-100: hsl(35, 90%, 94%);
+  --accent-200: hsl(35, 85%, 86%);
+  --accent-300: hsl(35, 80%, 70%);
+  --accent-400: hsl(35, 75%, 56%);
+  --accent-500: hsl(35, 78%, 46%);
+  --accent-600: hsl(35, 82%, 36%);
+  --accent-800: hsl(35, 88%, 20%);
+  --accent-900: hsl(35, 92%, 12%);
+}
+.dark[data-theme="amber"],
+.dark [data-theme="amber"] {
+  --zinc-50:  hsl(35, 15%, 98%);
+  --zinc-100: hsl(35, 12%, 95%);
+  --zinc-200: hsl(35, 10%, 88%);
+  --zinc-300: hsl(35, 8%, 78%);
+  --zinc-400: hsl(35, 7%, 60%);
+  --zinc-500: hsl(35, 7%, 47%);
+  --zinc-600: hsl(35, 8%, 35%);
+  --zinc-700: hsl(30, 11%, 22%);
+  --zinc-800: hsl(25, 13%, 14%);
+  --zinc-900: hsl(20, 15%, 9%);
+  --zinc-950: hsl(15, 18%, 5%);
+
+  --accent-100: hsl(35, 90%, 94%);
+  --accent-200: hsl(35, 85%, 86%);
+  --accent-300: hsl(35, 80%, 70%);
+  --accent-400: hsl(35, 75%, 56%);
+  --accent-500: hsl(35, 78%, 46%);
+  --accent-600: hsl(35, 82%, 36%);
+  --accent-800: hsl(35, 88%, 20%);
+  --accent-900: hsl(35, 92%, 12%);
+}
+
+/* ── Theme: Rose (Pink / Magenta) ── */
+:root[data-theme="rose"] {
+  --zinc-50:  hsl(330, 8%, 96.5%);
+  --zinc-100: hsl(330, 7%, 93%);
+  --zinc-200: hsl(330, 6%, 87%);
+  --zinc-300: hsl(330, 5%, 78%);
+  --zinc-400: hsl(330, 5%, 62%);
+  --zinc-500: hsl(330, 5%, 48%);
+  --zinc-600: hsl(330, 6%, 37%);
+  --zinc-700: hsl(330, 7%, 28%);
+  --zinc-800: hsl(330, 8%, 21%);
+  --zinc-900: hsl(330, 10%, 15%);
+  --zinc-950: hsl(330, 12%, 11%);
+
+  --accent-100: hsl(330, 85%, 94%);
+  --accent-200: hsl(330, 80%, 86%);
+  --accent-300: hsl(330, 75%, 70%);
+  --accent-400: hsl(330, 70%, 56%);
+  --accent-500: hsl(330, 75%, 48%);
+  --accent-600: hsl(330, 80%, 38%);
+  --accent-800: hsl(330, 85%, 20%);
+  --accent-900: hsl(330, 90%, 12%);
+}
+.dark[data-theme="rose"],
+.dark [data-theme="rose"] {
+  --zinc-50:  hsl(330, 15%, 98%);
+  --zinc-100: hsl(330, 12%, 95%);
+  --zinc-200: hsl(330, 10%, 88%);
+  --zinc-300: hsl(330, 8%, 78%);
+  --zinc-400: hsl(330, 7%, 60%);
+  --zinc-500: hsl(330, 7%, 47%);
+  --zinc-600: hsl(330, 8%, 35%);
+  --zinc-700: hsl(330, 11%, 22%);
+  --zinc-800: hsl(325, 13%, 14%);
+  --zinc-900: hsl(320, 15%, 9%);
+  --zinc-950: hsl(315, 18%, 5%);
+
+  --accent-100: hsl(330, 85%, 94%);
+  --accent-200: hsl(330, 80%, 86%);
+  --accent-300: hsl(330, 75%, 70%);
+  --accent-400: hsl(330, 70%, 56%);
+  --accent-500: hsl(330, 75%, 48%);
+  --accent-600: hsl(330, 80%, 38%);
+  --accent-800: hsl(330, 85%, 20%);
+  --accent-900: hsl(330, 90%, 12%);
+}
+
+/* ── Theme: Catppuccin (Latte & Mocha) ── */
+:root[data-theme="catppuccin"] {
+  --zinc-50:  hsl(220, 23%, 95%);
+  --zinc-100: hsl(220, 22%, 92%);
+  --zinc-200: hsl(220, 21%, 89%);
+  --zinc-300: hsl(223, 16%, 83%);
+  --zinc-400: hsl(225, 12%, 73%);
+  --zinc-500: hsl(228, 9%, 60%);
+  --zinc-600: hsl(230, 8%, 49%);
+  --zinc-700: hsl(233, 9%, 40%);
+  --zinc-800: hsl(234, 11%, 32%);
+  --zinc-900: hsl(234, 13%, 24%);
+  --zinc-950: hsl(234, 16%, 18%);
+
+  --accent-100: hsl(231, 97%, 94%);
+  --accent-200: hsl(231, 97%, 88%);
+  --accent-300: hsl(231, 97%, 80%);
+  --accent-400: hsl(231, 97%, 76%);
+  --accent-500: hsl(231, 97%, 72%);
+  --accent-600: hsl(231, 85%, 62%);
+  --accent-800: hsl(231, 70%, 42%);
+  --accent-900: hsl(231, 60%, 25%);
+}
+.dark[data-theme="catppuccin"],
+.dark [data-theme="catppuccin"] {
+  --zinc-50:  hsl(226, 64%, 88%);
+  --zinc-100: hsl(228, 24%, 80%);
+  --zinc-200: hsl(228, 16%, 70%);
+  --zinc-300: hsl(228, 12%, 60%);
+  --zinc-400: hsl(230, 10%, 48%);
+  --zinc-500: hsl(233, 11%, 38%);
+  --zinc-600: hsl(235, 12%, 28%);
+  --zinc-700: hsl(240, 19%, 20%);
+  --zinc-800: hsl(240, 21%, 15%);
+  --zinc-900: hsl(240, 21%, 12%);
+  --zinc-950: hsl(240, 23%, 9%);
+
+  --accent-100: hsl(230, 96%, 95%);
+  --accent-200: hsl(230, 96%, 90%);
+  --accent-300: hsl(230, 96%, 84%);
+  --accent-400: hsl(230, 80%, 75%);
+  --accent-500: hsl(230, 75%, 68%);
+  --accent-600: hsl(230, 65%, 58%);
+  --accent-800: hsl(230, 50%, 38%);
+  --accent-900: hsl(230, 45%, 24%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
