@@ -877,6 +877,7 @@ app.patch("/api/day", async (req, res) => {
 const vite = await createViteServer({
   server: {
     middlewareMode: true,
+    allowedHosts: true,
     watch: {
       ignored: ["**/liferl.md", "**/.liferl/**"],
     },
