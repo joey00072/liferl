@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { emaBySmoothing } from "./chart";
+import { emaBySmoothing, linePath } from "./chart";
 
 describe("emaBySmoothing", () => {
   test("starts from zero and keeps high smoothing slower than low smoothing", () => {
@@ -17,5 +17,19 @@ describe("emaBySmoothing", () => {
   test("clamps smoothing to the supported range", () => {
     expect(emaBySmoothing([100], -10)[0]).toBe(90);
     expect(emaBySmoothing([100], 10)[0]).toBeCloseTo(1);
+  });
+});
+
+describe("linePath", () => {
+  test("returns empty string for empty points list", () => {
+    expect(linePath([])).toBe("");
+  });
+
+  test("returns moveTo instruction for a single point", () => {
+    expect(linePath([{ x: 10, y: 20 }])).toBe("M 10 20");
+  });
+
+  test("returns bezier curve path for multiple points", () => {
+    expect(linePath([{ x: 10, y: 20 }, { x: 30, y: 40 }])).toBe("M 10 20 C 20 20, 20 40, 30 40");
   });
 });

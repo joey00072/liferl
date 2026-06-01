@@ -30,8 +30,8 @@ export function DailyRewardChart({
   const step = data.length ? barWidth + gap : 0;
   const xFor = (index: number) => padX + index * step + barWidth / 2;
   const yFor = (value: number) => height - padBottom - (value / maxValue) * innerHeight;
-  const emaPoints = [{ x: padX, y: height - padBottom }, ...emaValues.map((value, index) => ({ x: xFor(index), y: yFor(value) }))];
-  const rawPoints = [{ x: padX, y: height - padBottom }, ...data.map((day, index) => ({ x: xFor(index), y: yFor(day.reward) }))];
+  const emaPoints = emaValues.map((value, index) => ({ x: xFor(index), y: yFor(value) }));
+  const rawPoints = data.map((day, index) => ({ x: xFor(index), y: yFor(day.reward) }));
   const emaPath = linePath(emaPoints);
   const rawPath = linePath(rawPoints);
   const labelFor = (day: DayPoint) => day.label ?? formatShortDate(day.date);
