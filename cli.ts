@@ -74,6 +74,14 @@ function run(command: string, args: string[]) {
   return spawnSync(command, args, { encoding: "utf8" });
 }
 
+function nextStartArgs(config: Config) {
+  return ["x", "next", "start", "-H", config.host, "-p", String(config.port)];
+}
+
+function productionServerCommand(config: Config) {
+  return `${systemdQuote(process.execPath)} run build && exec ${systemdQuote(process.execPath)} ${nextStartArgs(config).map(systemdQuote).join(" ")}`;
+}
+
 async function readConfig(): Promise<Config | null> {
   try {
     return JSON.parse(await fs.readFile(configPath, "utf8")) as Config;
@@ -171,7 +179,15 @@ function serverEnv(config: Config) {
 
 async function runForeground() {
   const config = await ensureConfig();
-  const child = spawn(process.execPath, ["run", "server.ts"], {
+  const build = run(process.execPath, ["run", "build"]);
+  if (build.status !== 0) {
+    console.error(build.stdout);
+    console.error(build.stderr);
+    process.exitCode = build.status ?? 1;
+    return;
+  }
+
+  const child = spawn(process.execPath, nextStartArgs(config), {
     cwd: rootDir,
     env: serverEnv(config),
     stdio: "inherit",
@@ -200,7 +216,7 @@ async function startBackground() {
   await fs.mkdir(stateDir, { recursive: true });
   const out = fsSync.openSync(outLogPath, "a");
   const err = fsSync.openSync(errLogPath, "a");
-  const child = spawn(process.execPath, ["run", "server.ts"], {
+  const child = spawn("sh", ["-lc", productionServerCommand(config)], {
     cwd: rootDir,
     env: serverEnv(config),
     detached: true,
@@ -268,7 +284,7 @@ WorkingDirectory=${systemdQuote(rootDir)}
 Environment=${systemdQuote(`LIFERL_RECORDS_PATH=${config.recordsPath}`)}
 Environment=${systemdQuote(`PORT=${config.port}`)}
 Environment=${systemdQuote(`HOST=${config.host}`)}
-ExecStart=${systemdQuote(process.execPath)} run server.ts
+ExecStart=/bin/sh -lc ${systemdQuote(productionServerCommand(config))}
 Restart=on-failure
 RestartSec=3
 

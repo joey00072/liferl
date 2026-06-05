@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export function TabButton({
   active,
   children,
@@ -5,8 +7,8 @@ export function TabButton({
   onClick,
 }: {
   active: boolean;
-  children: React.ReactNode;
-  icon: React.ReactNode;
+  children: ReactNode;
+  icon: ReactNode;
   onClick: () => void;
 }) {
   return (

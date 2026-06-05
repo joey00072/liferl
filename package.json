@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": false,
   "description": "A markdown-backed vibe habit tracker to fix your life.",
-  "main": "server.ts",
   "scripts": {
-    "dev": "bun run server.ts",
+    "dev": "next dev --webpack -H 0.0.0.0 -p 5173",
+    "start": "next start -H 0.0.0.0 -p 5173",
     "service": "bun run cli.ts",
     "service:setup": "bun run cli.ts setup",
     "service:run": "bun run cli.ts run",
@@ -18,7 +18,7 @@
     "service:systemd:install": "bun run cli.ts systemd:install",
     "service:systemd:uninstall": "bun run cli.ts systemd:uninstall",
     "screenshots": "bun run scripts/capture-screenshots.ts",
-    "build": "vite build",
+    "build": "next build --webpack",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
@@ -42,24 +42,21 @@
   "type": "module",
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.15",
-    "@tailwindcss/vite": "^4.3.0",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@tailwindcss/postcss": "^4.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "express": "^5.2.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
+    "next": "^16.2.7",
     "react": "^19.2.6",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.14"
+    "typescript": "^6.0.3"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
-    "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",

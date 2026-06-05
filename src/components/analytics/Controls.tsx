@@ -1,4 +1,6 @@
-export function ToggleButton({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
+import type { ReactNode } from "react";
+
+export function ToggleButton({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -14,7 +16,7 @@ export function ToggleButton({ active, children, onClick }: { active: boolean; c
   );
 }
 
-export function HabitChip({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
+export function HabitChip({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
   return (
     <button
       type="button"

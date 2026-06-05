@@ -1,10 +1,7 @@
-import express from "express";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { createServer as createViteServer } from "vite";
 
 type TaskSnapshot = {
   id: string;
@@ -69,13 +66,12 @@ type LegacyTask = {
   active: boolean;
 };
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const cacheDir = path.join(__dirname, ".liferl");
+const projectRoot = process.cwd();
+const cacheDir = path.join(projectRoot, ".liferl");
 const cachePath = path.join(cacheDir, "cache.json");
 const configPath = path.join(cacheDir, "config.json");
-const recordsPath = resolveRecordsPath();
-const host = process.env.HOST?.trim() || "0.0.0.0";
-const today = () => new Date().toLocaleDateString("en-CA");
+export const recordsPath = resolveRecordsPath();
+export const today = () => new Date().toLocaleDateString("en-CA");
 
 let memoryCache: { sourceHash: string; store: Store } | null = null;
 let mutationQueue = Promise.resolve();
@@ -98,7 +94,7 @@ function resolveRecordsPath() {
     // No local service config yet; fall back to the repo sample record file.
   }
 
-  return path.join(__dirname, "liferl.md");
+  return path.join(projectRoot, "liferl.md");
 }
 
 function slugify(input: string) {
@@ -490,14 +486,6 @@ async function writeStoreState(store: Store, expectedSourceHash?: string) {
   return currentHash;
 }
 
-async function readStore(): Promise<Store> {
-  return (await readStoreState()).store;
-}
-
-async function writeStore(store: Store) {
-  await writeStoreState(store);
-}
-
 function withMutation<T>(operation: () => Promise<T>): Promise<T> {
   const run = mutationQueue.then(operation, operation);
   mutationQueue = run.then(
@@ -524,15 +512,16 @@ async function readAndNormalizeStore(targetDate?: string) {
   });
 }
 
-function sendError(res: express.Response, error: unknown) {
-  const status =
-    error instanceof SourceChangedError
-      ? error.status
-      : typeof error === "object" && error && "status" in error
-        ? Number(error.status) || 500
-        : 500;
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  res.status(status).json({ error: message });
+export function getErrorResponse(error: unknown) {
+  return {
+    status:
+      error instanceof SourceChangedError
+        ? error.status
+        : typeof error === "object" && error && "status" in error
+          ? Number(error.status) || 500
+          : 500,
+    message: error instanceof Error ? error.message : "Unexpected server error.",
+  };
 }
 
 function summarize(store: Store, targetDate: string = today()) {
@@ -688,208 +677,130 @@ function summarize(store: Store, targetDate: string = today()) {
   };
 }
 
-const app = express();
-app.use(express.json());
-
-app.get("/api/health", (_req, res) => {
-  res.json({
+export function getHealth() {
+  return {
     ok: true,
     recordsPath,
     schema: "liferl.v1",
     time: new Date().toISOString(),
-  });
-});
+  };
+}
 
-app.get("/api/state", async (req, res) => {
-  const date = req.query.date ? String(req.query.date) : today();
-  try {
-    res.json(await readAndNormalizeStore(date));
-  } catch (error) {
-    sendError(res, error);
+export async function getState(date: string = today()) {
+  return readAndNormalizeStore(date);
+}
+
+export async function createTask(date: string = today(), body: Record<string, unknown>) {
+  const title = String(body.title ?? "").trim();
+  if (!title) {
+    const error = new Error("Task title is required.");
+    Object.assign(error, { status: 400 });
+    throw error;
   }
-});
 
-app.post("/api/tasks", async (req, res) => {
-  const title = String(req.body.title ?? "").trim();
-  if (!title) return res.status(400).json({ error: "Task title is required." });
-  const date = req.query.date ? String(req.query.date) : today();
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
 
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
+    const idBase = slugify(title);
+    let id = idBase;
+    let i = 2;
 
-      const idBase = slugify(title);
-      let id = idBase;
-      let i = 2;
-
-      const allTaskIds = new Set<string>();
-      for (const day of store.days) {
-        for (const t of day.tasks) {
-          allTaskIds.add(t.id);
-        }
+    const allTaskIds = new Set<string>();
+    for (const day of store.days) {
+      for (const t of day.tasks) {
+        allTaskIds.add(t.id);
       }
-      while (allTaskIds.has(id)) id = `${idBase}-${i++}`;
-
-      dayBlock.tasks.push({
-        id,
-        title,
-        score: clampScore(req.body.score ?? req.body.reward ?? 0),
-        icon: req.body.icon ? String(req.body.icon).trim() : undefined,
-        category: req.body.category ? String(req.body.category).trim() : undefined,
-        target: req.body.target ? String(req.body.target).trim() : undefined,
-      });
-    }, date));
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-
-app.post("/api/tasks/:id/toggle", async (req, res) => {
-  const date = String(req.query.date ?? today());
-
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
-
-      const task = dayBlock.tasks.find((t) => t.id === req.params.id);
-      if (!task) {
-        const error = new Error("Task not found.");
-        Object.assign(error, { status: 404 });
-        throw error;
-      }
-
-      task.score = task.score >= 70 ? 0 : 100;
-    }, date));
-  } catch (error) {
-    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
-    if (status) {
-      res.status(status).json({ error: error instanceof Error ? error.message : "Request failed." });
-    } else {
-      sendError(res, error);
     }
-  }
-});
+    while (allTaskIds.has(id)) id = `${idBase}-${i++}`;
 
-app.patch("/api/tasks/:id", async (req, res) => {
-  const date = String(req.query.date ?? today());
+    dayBlock.tasks.push({
+      id,
+      title,
+      score: clampScore(body.score ?? body.reward ?? 0),
+      icon: body.icon ? String(body.icon).trim() : undefined,
+      category: body.category ? String(body.category).trim() : undefined,
+      target: body.target ? String(body.target).trim() : undefined,
+    });
+  }, date);
+}
 
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
-
-      const task = dayBlock.tasks.find((t) => t.id === req.params.id);
-      if (!task) {
-        const error = new Error("Task not found.");
-        Object.assign(error, { status: 404 });
-        throw error;
-      }
-
-      if (req.body.title !== undefined) task.title = String(req.body.title).trim();
-      if (req.body.score !== undefined) task.score = clampScore(req.body.score);
-      if (req.body.icon !== undefined) task.icon = String(req.body.icon).trim() || undefined;
-      if (req.body.category !== undefined) task.category = String(req.body.category).trim() || undefined;
-      if (req.body.target !== undefined) task.target = String(req.body.target).trim() || undefined;
-      if (req.body.metric !== undefined) task.metric = String(req.body.metric).trim() || undefined;
-      if (req.body.note !== undefined) task.note = String(req.body.note).trim() || undefined;
-      if (req.body.tags !== undefined) {
-        task.tags = Array.isArray(req.body.tags) ? req.body.tags : [];
-      }
-    }, date));
-  } catch (error) {
-    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
-    if (status) {
-      res.status(status).json({ error: error instanceof Error ? error.message : "Request failed." });
-    } else {
-      sendError(res, error);
+export async function toggleTask(date: string = today(), id: string) {
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
+    const task = dayBlock.tasks.find((t) => t.id === id);
+    if (!task) {
+      const error = new Error("Task not found.");
+      Object.assign(error, { status: 404 });
+      throw error;
     }
-  }
-});
 
-app.delete("/api/tasks/:id", async (req, res) => {
-  const date = String(req.query.date ?? today());
+    task.score = task.score >= 70 ? 0 : 100;
+  }, date);
+}
 
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
-      const task = dayBlock.tasks.find((t) => t.id === req.params.id);
-      if (!task) {
-        const error = new Error("Task not found.");
-        Object.assign(error, { status: 404 });
-        throw error;
-      }
+export async function updateTask(date: string = today(), id: string, body: Record<string, unknown>) {
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
 
-      task.archived = true;
-    }, date));
-  } catch (error) {
-    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
-    if (status) {
-      res.status(status).json({ error: error instanceof Error ? error.message : "Request failed." });
-    } else {
-      sendError(res, error);
+    const task = dayBlock.tasks.find((t) => t.id === id);
+    if (!task) {
+      const error = new Error("Task not found.");
+      Object.assign(error, { status: 404 });
+      throw error;
     }
-  }
-});
 
-app.post("/api/tasks/:id/restore", async (req, res) => {
-  const date = String(req.query.date ?? today());
-
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
-      const task = dayBlock.tasks.find((t) => t.id === req.params.id);
-      if (!task) {
-        const error = new Error("Task not found.");
-        Object.assign(error, { status: 404 });
-        throw error;
-      }
-
-      task.archived = undefined;
-    }, date));
-  } catch (error) {
-    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
-    if (status) {
-      res.status(status).json({ error: error instanceof Error ? error.message : "Request failed." });
-    } else {
-      sendError(res, error);
+    if (body.title !== undefined) task.title = String(body.title).trim();
+    if (body.score !== undefined) task.score = clampScore(body.score);
+    if (body.icon !== undefined) task.icon = String(body.icon).trim() || undefined;
+    if (body.category !== undefined) task.category = String(body.category).trim() || undefined;
+    if (body.target !== undefined) task.target = String(body.target).trim() || undefined;
+    if (body.metric !== undefined) task.metric = String(body.metric).trim() || undefined;
+    if (body.note !== undefined) task.note = String(body.note).trim() || undefined;
+    if (body.tags !== undefined) {
+      task.tags = Array.isArray(body.tags) ? body.tags.map(String) : [];
     }
-  }
-});
+  }, date);
+}
 
-app.patch("/api/day", async (req, res) => {
-  const date = String(req.body.date ?? today());
+export async function archiveTask(date: string = today(), id: string) {
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
+    const task = dayBlock.tasks.find((t) => t.id === id);
+    if (!task) {
+      const error = new Error("Task not found.");
+      Object.assign(error, { status: 404 });
+      throw error;
+    }
 
-  try {
-    res.json(await mutateStore((store) => {
-      const dayBlock = ensureDayBlock(store, date);
+    task.archived = true;
+  }, date);
+}
 
-      if (req.body.mood !== undefined) dayBlock.mood = req.body.mood === null ? undefined : Number(req.body.mood);
-      if (req.body.energy !== undefined) dayBlock.energy = req.body.energy === null ? undefined : Number(req.body.energy);
-      if (req.body.sleep !== undefined) dayBlock.sleep = req.body.sleep === null ? undefined : String(req.body.sleep).trim();
-      if (req.body.weight !== undefined) dayBlock.weight = req.body.weight === null ? undefined : String(req.body.weight).trim();
-      if (req.body.note !== undefined) dayBlock.note = req.body.note === null ? undefined : String(req.body.note).trim();
+export async function restoreTask(date: string = today(), id: string) {
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
+    const task = dayBlock.tasks.find((t) => t.id === id);
+    if (!task) {
+      const error = new Error("Task not found.");
+      Object.assign(error, { status: 404 });
+      throw error;
+    }
 
-    }, date));
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+    task.archived = undefined;
+  }, date);
+}
 
-const vite = await createViteServer({
-  server: {
-    middlewareMode: true,
-    allowedHosts: true,
-    watch: {
-      ignored: ["**/liferl.md", "**/.liferl/**"],
-    },
-  },
-  appType: "spa",
-});
+export async function updateDay(body: Record<string, unknown>) {
+  const date = String(body.date ?? today());
 
-app.use(vite.middlewares);
+  return mutateStore((store) => {
+    const dayBlock = ensureDayBlock(store, date);
 
-const port = Number(process.env.PORT ?? 5173);
-app.listen(port, host, () => {
-  const displayHost = host === "0.0.0.0" ? "localhost" : host;
-  console.log(`LifeRL running at http://${displayHost}:${port}`);
-  console.log(`LifeRL records: ${recordsPath}`);
-});
+    if (body.mood !== undefined) dayBlock.mood = body.mood === null ? undefined : Number(body.mood);
+    if (body.energy !== undefined) dayBlock.energy = body.energy === null ? undefined : Number(body.energy);
+    if (body.sleep !== undefined) dayBlock.sleep = body.sleep === null ? undefined : String(body.sleep).trim();
+    if (body.weight !== undefined) dayBlock.weight = body.weight === null ? undefined : String(body.weight).trim();
+    if (body.note !== undefined) dayBlock.note = body.note === null ? undefined : String(body.note).trim();
+
+  }, date);
+}

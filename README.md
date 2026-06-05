@@ -3,8 +3,8 @@
 A markdown-backed vibe habit tracker to fix my life.
 
 LifeRL keeps the source of truth in `liferl.md`, so your habits, notes, scores,
-and history stay readable in Obsidian. The web UI is just a faster way to edit
-the file and see reward trends.
+and history stay readable in Obsidian. The Next.js web UI is just a faster way
+to edit the file and see reward trends.
 
 ## Screenshots
 

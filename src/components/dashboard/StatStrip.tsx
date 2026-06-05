@@ -1,4 +1,5 @@
 import { Flame, Layers, Trophy } from "lucide-react";
+import type { ReactNode } from "react";
 import type { State } from "../../types";
 
 export function StatStrip({ state, progress }: { state: State; progress: number }) {
@@ -43,7 +44,7 @@ function Stat({
   value,
   accent = false,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
   accent?: boolean;

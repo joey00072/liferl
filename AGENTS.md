@@ -2,7 +2,7 @@
 
 ## Project
 
-LifeRL is a Bun + React + Vite dashboard for daily habits. The source of truth is plain markdown in `liferl.md`, inside the `<records>...</records>` block, so the data remains usable from Obsidian.
+LifeRL is a Next.js + React dashboard for daily habits, run with Bun. The source of truth is plain markdown in `liferl.md`, inside the `<records>...</records>` block, so the data remains usable from Obsidian.
 
 ## Commands
 
@@ -16,7 +16,7 @@ The local app runs at `http://localhost:5173` by default.
 
 ## Data Contract
 
-`server.ts` owns all markdown persistence. The app should not write `liferl.md` directly from the browser.
+`src/server/liferl-store.ts` owns all markdown persistence. Next.js route handlers call it from the server. The app should not write `liferl.md` directly from the browser.
 
 Inside `liferl.md`, keep this shape:
 
@@ -38,7 +38,7 @@ Rules:
 - `Daily Log` rows define completions.
 - Deleting a task means setting `active` to `false`, not removing history.
 - Editing a task should update the task title/reward only; old log rows remain historical.
-- `liferl.md` is ignored by Vite watch in `server.ts` to prevent reload loops.
+- `liferl.md` is ignored by Next webpack watch in `next.config.ts` to prevent reload loops where supported.
 
 ## API
 
@@ -82,7 +82,8 @@ Prefer:
 
 ## Frontend Structure
 
-- `src/App.tsx`: app state, API actions, page layout.
+- `src/app/`: Next.js App Router pages and API routes.
+- `src/components/app/`: app state, top bar, mobile navigation, page layout.
 - `src/components/dashboard/`: daily habit workflow and top stats.
 - `src/components/analytics/`: chart, metrics, habit filters, chart options.
 - `src/components/sidebar/`: secondary management panels.
@@ -90,6 +91,7 @@ Prefer:
 - `src/lib/date.ts`: date helpers.
 - `src/types.ts`: shared app types.
 - `src/api.ts`: frontend API wrapper.
+- `src/server/liferl-store.ts`: markdown parser, persistence, and server-side mutations.
 
 ## EMA Semantics
 
