@@ -13,6 +13,7 @@ import { applyCustomTheme, clearCustomTheme, type ColorMode } from "../../lib/th
 import type { State } from "../../types";
 import { MobileNav } from "./MobileNav";
 import { TopBar } from "./TopBar";
+import { LifeRlSkeleton } from "./LifeRlSkeleton";
 import type { MobilePanel } from "./types";
 
 export default function LifeRlApp() {
@@ -37,23 +38,70 @@ export default function LifeRlApp() {
     if (typeof window === "undefined") return "#10b981";
     return localStorage.getItem("liferl-custom-seed") || "#10b981";
   });
+  const [isRevalidating, setIsRevalidating] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  // Helper to update both React state and cache
+  const updateStateAndCache = (next: State) => {
+    setState(next);
+    try {
+      localStorage.setItem(`liferl-state-${next.date}`, JSON.stringify(next));
+      localStorage.setItem("liferl-state-latest", JSON.stringify(next));
+    } catch (e) {
+      console.error("Failed to write state cache", e);
+    }
+  };
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
 
+  // Sync load cache immediately on date change/mount to prevent layout flash/hydration delay
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(`liferl-state-${selectedDate}`);
+      if (cached) {
+        setState(JSON.parse(cached));
+      } else {
+        const latest = localStorage.getItem("liferl-state-latest");
+        if (latest) {
+          const parsed = JSON.parse(latest) as State;
+          // Render a structural placeholder based on latest active tasks
+          setState({
+            ...parsed,
+            date: selectedDate,
+            dayNote: undefined,
+            dayReward: 0,
+            todayReward: 0,
+            completedToday: 0,
+            completedDay: 0,
+            tasks: parsed.tasks.map(t => ({ ...t, doneOnDate: false, doneToday: false })),
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to read state cache", e);
+    }
+  }, [selectedDate]);
+
   useEffect(() => {
     const requestId = ++stateRequestId.current;
+    setIsRevalidating(true);
     requestState(`/api/state?date=${selectedDate}`)
       .then((next) => {
         if (requestId === stateRequestId.current) {
-          setState(next);
+          updateStateAndCache(next);
+          setIsRevalidating(false);
+          setIsOffline(false);
+          setError("");
         }
       })
       .catch((err) => {
         if (requestId === stateRequestId.current) {
           setError(err.message);
+          setIsRevalidating(false);
+          setIsOffline(true);
         }
       });
   }, [selectedDate]);
@@ -135,7 +183,7 @@ export default function LifeRlApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, reward }),
       });
-      setState(next);
+      updateStateAndCache(next);
       setTitle("");
       setReward(10);
     } catch (err) {
@@ -147,7 +195,8 @@ export default function LifeRlApp() {
     setError("");
     if (!state) return;
     try {
-      setState(await requestState(`/api/tasks/${taskId}/toggle?date=${state.date}`, { method: "POST" }));
+      const next = await requestState(`/api/tasks/${taskId}/toggle?date=${state.date}`, { method: "POST" });
+      updateStateAndCache(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update task.");
     }
@@ -157,7 +206,8 @@ export default function LifeRlApp() {
     setError("");
     if (!state) return;
     try {
-      setState(await requestState(`/api/tasks/${taskId}?date=${state.date}`, { method: "DELETE" }));
+      const next = await requestState(`/api/tasks/${taskId}?date=${state.date}`, { method: "DELETE" });
+      updateStateAndCache(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not archive task.");
     }
@@ -167,7 +217,8 @@ export default function LifeRlApp() {
     setError("");
     if (!state) return;
     try {
-      setState(await requestState(`/api/tasks/${taskId}/restore?date=${state.date}`, { method: "POST" }));
+      const next = await requestState(`/api/tasks/${taskId}/restore?date=${state.date}`, { method: "POST" });
+      updateStateAndCache(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not restore task.");
     }
@@ -177,13 +228,12 @@ export default function LifeRlApp() {
     setError("");
     if (!state) return;
     try {
-      setState(
-        await requestState(`/api/tasks/${taskId}?date=${state.date}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: nextTitle, score: nextScore, note: nextNote }),
-        }),
-      );
+      const next = await requestState(`/api/tasks/${taskId}?date=${state.date}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: nextTitle, score: nextScore, note: nextNote }),
+      });
+      updateStateAndCache(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update task.");
     }
@@ -193,27 +243,19 @@ export default function LifeRlApp() {
     setError("");
     if (!state) return;
     try {
-      setState(
-        await requestState("/api/day", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ date: state.date, note: nextNote.trim() || null }),
-        }),
-      );
+      const next = await requestState("/api/day", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: state.date, note: nextNote.trim() || null }),
+      });
+      updateStateAndCache(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save note.");
     }
   }
 
   if (!state) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <RotateCcw className="size-4 animate-spin" />
-          Loading
-        </div>
-      </main>
-    );
+    return <LifeRlSkeleton />;
   }
 
   const habitsSection = (
@@ -268,6 +310,8 @@ export default function LifeRlApp() {
           onThemePresetChange={setThemePreset}
           customSeedColor={customSeedColor}
           onCustomSeedColorChange={setCustomSeedColor}
+          isRevalidating={isRevalidating}
+          isOffline={isOffline}
         />
 
         {/* Stat strip — always visible */}

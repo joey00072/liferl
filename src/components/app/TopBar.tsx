@@ -16,6 +16,8 @@ type TopBarProps = {
   onThemePresetChange: (preset: string) => void;
   customSeedColor: string;
   onCustomSeedColorChange: Dispatch<SetStateAction<string>>;
+  isRevalidating?: boolean;
+  isOffline?: boolean;
 };
 
 export function TopBar({
@@ -28,6 +30,8 @@ export function TopBar({
   onThemePresetChange,
   customSeedColor,
   onCustomSeedColorChange,
+  isRevalidating = false,
+  isOffline = false,
 }: TopBarProps) {
   const [isDateOpen, setIsDateOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
@@ -35,7 +39,25 @@ export function TopBar({
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-zinc-200 py-3 dark:border-zinc-800">
-      <span className="text-sm font-semibold tracking-tight">LifeRL</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold tracking-tight">LifeRL</span>
+        {isOffline ? (
+          <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span className="size-1 bg-amber-500 rounded-full animate-pulse" />
+            Offline
+          </span>
+        ) : isRevalidating ? (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+            <span className="size-1 bg-zinc-300 dark:bg-zinc-700 rounded-full animate-ping" />
+            Syncing...
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400" title="All changes saved & synced">
+            <span className="size-1 bg-emerald-500 rounded-full" />
+            Synced
+          </span>
+        )}
+      </div>
       <div className="relative flex items-center gap-1.5">
         <Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
           <PopoverTrigger asChild>
