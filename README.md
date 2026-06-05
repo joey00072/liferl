@@ -3,8 +3,8 @@
 A markdown-backed vibe habit tracker to fix my life.
 
 LifeRL keeps the source of truth in `liferl.md`, so your habits, notes, scores,
-and history stay readable in Obsidian. The Next.js web UI is just a faster way
-to edit the file and see reward trends.
+and history stay readable in Obsidian. The Next.js web UI talks to a FastAPI
+backend that edits the file and serves reward trends.
 
 ## Screenshots
 
@@ -26,10 +26,12 @@ Mobile habits and trends
 
 ```sh
 bun install
+python3 -m pip install -r requirements.txt
 bun run dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:5173`. FastAPI runs on `http://localhost:5174`, and
+Next proxies `/api/*` to it.
 
 Use a different Markdown file:
 
@@ -78,7 +80,7 @@ On the VPS:
 git clone https://github.com/joey00072/liferl.git
 cd liferl
 bun install
-bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --yes
+bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
 bun run service:systemd:install
 ```
 

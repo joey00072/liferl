@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 type Config = {
   recordsPath: string;
   port: number;
+  apiPort?: number;
   host: string;
   updatedAt: string;
 };
@@ -30,7 +31,7 @@ function usage() {
 
 Usage:
   bun run service setup              Ask for Markdown path, host, and port
-  bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --yes
+  bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
   bun run service run                Run server in the foreground
   bun run service start              Start server in the background
   bun run service stop               Stop background server
@@ -47,6 +48,7 @@ Config:
 Env used by the server:
   LIFERL_RECORDS_PATH=/path/to/liferl.md
   PORT=5173
+  LIFERL_API_PORT=5174
   HOST=0.0.0.0
 `);
 }
@@ -74,12 +76,12 @@ function run(command: string, args: string[]) {
   return spawnSync(command, args, { encoding: "utf8" });
 }
 
-function nextStartArgs(config: Config) {
-  return ["x", "next", "start", "-H", config.host, "-p", String(config.port)];
+function apiPort(config: Config) {
+  return config.apiPort ?? config.port + 1;
 }
 
 function productionServerCommand(config: Config) {
-  return `${systemdQuote(process.execPath)} run build && exec ${systemdQuote(process.execPath)} ${nextStartArgs(config).map(systemdQuote).join(" ")}`;
+  return `${systemdQuote(process.execPath)} run build && exec ${systemdQuote(process.execPath)} run scripts/start.mjs`;
 }
 
 async function readConfig(): Promise<Config | null> {
@@ -147,6 +149,10 @@ async function setup(options: Map<string, string | boolean>) {
   const portAnswer = optionString(options, "port") || await ask(rl, `Port [${defaultPort}]: `, defaultPort);
   const port = Number(portAnswer) || 5173;
 
+  const defaultApiPort = String(current?.apiPort ?? port + 1);
+  const apiPortAnswer = optionString(options, "api-port") || optionString(options, "apiPort") || await ask(rl, `API port [${defaultApiPort}]: `, defaultApiPort);
+  const apiPort = Number(apiPortAnswer) || port + 1;
+
   rl?.close();
 
   await fs.mkdir(path.dirname(recordsPath), { recursive: true });
@@ -157,6 +163,7 @@ async function setup(options: Map<string, string | boolean>) {
   const config = {
     recordsPath,
     port,
+    apiPort,
     host,
     updatedAt: new Date().toISOString(),
   };
@@ -165,6 +172,7 @@ async function setup(options: Map<string, string | boolean>) {
   console.log(`Config written: ${configPath}`);
   console.log(`Markdown: ${recordsPath}`);
   console.log(`URL: http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
+  console.log(`API: http://${host === "0.0.0.0" ? "localhost" : host}:${apiPort}`);
   return config;
 }
 
@@ -173,6 +181,9 @@ function serverEnv(config: Config) {
     ...process.env,
     LIFERL_RECORDS_PATH: config.recordsPath,
     PORT: String(config.port),
+    LIFERL_API_PORT: String(apiPort(config)),
+    API_INTERNAL_URL: `http://127.0.0.1:${apiPort(config)}`,
+    NEXT_PUBLIC_API_BASE_URL: "",
     HOST: config.host,
   };
 }
@@ -187,7 +198,7 @@ async function runForeground() {
     return;
   }
 
-  const child = spawn(process.execPath, nextStartArgs(config), {
+  const child = spawn(process.execPath, ["run", "scripts/start.mjs"], {
     cwd: rootDir,
     env: serverEnv(config),
     stdio: "inherit",
@@ -258,8 +269,10 @@ async function status() {
   console.log(`Config: ${fsSync.existsSync(configPath) ? configPath : "missing"}`);
   if (config) {
     console.log(`Markdown: ${config.recordsPath}`);
-    console.log(`Bind: ${config.host}:${config.port}`);
+    console.log(`Frontend bind: ${config.host}:${config.port}`);
+    console.log(`API bind: ${config.host}:${apiPort(config)}`);
     console.log(`URL: http://${config.host === "0.0.0.0" ? "localhost" : config.host}:${config.port}`);
+    console.log(`API: http://${config.host === "0.0.0.0" ? "localhost" : config.host}:${apiPort(config)}`);
   }
   console.log(`Logs: ${outLogPath}`);
 }
@@ -283,6 +296,9 @@ Type=simple
 WorkingDirectory=${systemdQuote(rootDir)}
 Environment=${systemdQuote(`LIFERL_RECORDS_PATH=${config.recordsPath}`)}
 Environment=${systemdQuote(`PORT=${config.port}`)}
+Environment=${systemdQuote(`LIFERL_API_PORT=${apiPort(config)}`)}
+Environment=${systemdQuote(`API_INTERNAL_URL=http://127.0.0.1:${apiPort(config)}`)}
+Environment=${systemdQuote("NEXT_PUBLIC_API_BASE_URL=")}
 Environment=${systemdQuote(`HOST=${config.host}`)}
 ExecStart=/bin/sh -lc ${systemdQuote(productionServerCommand(config))}
 Restart=on-failure

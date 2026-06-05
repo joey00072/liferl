@@ -2,21 +2,22 @@
 
 ## Project
 
-LifeRL is a Next.js + React dashboard for daily habits, run with Bun. The source of truth is plain markdown in `liferl.md`, inside the `<records>...</records>` block, so the data remains usable from Obsidian.
+LifeRL is a split Next.js + FastAPI dashboard for daily habits. The source of truth is plain markdown in `liferl.md`, inside the `<records>...</records>` block, so the data remains usable from Obsidian.
 
 ## Commands
 
-- Install dependencies: `bun install`
-- Start dev server: `bun run dev`
+- Install frontend dependencies: `bun install`
+- Install backend dependencies: `python3 -m pip install -r requirements.txt`
+- Start dev servers: `bun run dev`
 - Run tests: `bun run test`
 - Typecheck: `bun run typecheck`
 - Production build: `bun run build`
 
-The local app runs at `http://localhost:5173` by default.
+The local app runs at `http://localhost:5173` by default. FastAPI runs at `http://localhost:5174`, and Next proxies `/api/*` to it through `next.config.ts`.
 
 ## Data Contract
 
-`src/server/liferl-store.ts` owns all markdown persistence. Next.js route handlers call it from the server. The app should not write `liferl.md` directly from the browser.
+`backend/main.py` owns all markdown persistence. The frontend should only call the FastAPI routes and should not write `liferl.md` directly from the browser.
 
 Inside `liferl.md`, keep this shape:
 
@@ -82,7 +83,8 @@ Prefer:
 
 ## Frontend Structure
 
-- `src/app/`: Next.js App Router pages and API routes.
+- `backend/main.py`: FastAPI routes, markdown parser, persistence, and server-side mutations.
+- `src/app/`: Next.js App Router pages.
 - `src/components/app/`: app state, top bar, mobile navigation, page layout.
 - `src/components/dashboard/`: daily habit workflow and top stats.
 - `src/components/analytics/`: chart, metrics, habit filters, chart options.
@@ -91,7 +93,7 @@ Prefer:
 - `src/lib/date.ts`: date helpers.
 - `src/types.ts`: shared app types.
 - `src/api.ts`: frontend API wrapper.
-- `src/server/liferl-store.ts`: markdown parser, persistence, and server-side mutations.
+- `next.config.ts`: proxies `/api/*` requests to FastAPI.
 
 ## EMA Semantics
 

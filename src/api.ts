@@ -1,7 +1,14 @@
 import type { State } from "./types";
 
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+
+function apiUrl(url: string) {
+  if (!apiBaseUrl || /^https?:\/\//.test(url)) return url;
+  return `${apiBaseUrl}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 export async function requestState(url: string, options?: RequestInit) {
-  const response = await fetch(url, options);
+  const response = await fetch(apiUrl(url), options);
   if (!response.ok) {
     const text = await response.text();
     let message = text;
