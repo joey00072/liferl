@@ -1,8 +1,7 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { requestState } from "../../api";
+import { flushOfflineCommands, requestState, subscribeToStateEvents } from "../../api";
 import { ChartsPanel } from "../analytics/ChartsPanel";
 import { DayNotePanel } from "../dashboard/DayNotePanel";
 import { QuestPanel } from "../dashboard/QuestPanel";
@@ -15,6 +14,8 @@ import { MobileNav } from "./MobileNav";
 import { TopBar } from "./TopBar";
 import { LifeRlSkeleton } from "./LifeRlSkeleton";
 import type { MobilePanel } from "./types";
+import { PomodoroTimer } from "../dashboard/PomodoroTimer";
+import { MiniPomodoroBanner } from "../dashboard/MiniPomodoroBanner";
 
 export default function LifeRlApp() {
   const [state, setState] = useState<State | null>(null);
@@ -26,9 +27,12 @@ export default function LifeRlApp() {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [didSeedSelection, setDidSeedSelection] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("habits");
+  const [desktopRightTab, setDesktopRightTab] = useState<"habits" | "pomodoro">("habits");
   const [theme, setTheme] = useState<ColorMode>(() => {
     if (typeof window === "undefined") return "light";
-    return localStorage.getItem("liferl-theme") === "dark" ? "dark" : "light";
+    const saved = localStorage.getItem("liferl-theme");
+    if (saved === "dark" || saved === "light") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const [themePreset, setThemePreset] = useState<string>(() => {
     if (typeof window === "undefined") return "rose";
@@ -40,6 +44,7 @@ export default function LifeRlApp() {
   });
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const [stateRefreshToken, setStateRefreshToken] = useState(0);
 
   // Helper to update both React state and cache
   const updateStateAndCache = (next: State) => {
@@ -55,6 +60,40 @@ export default function LifeRlApp() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("liferl-theme");
+    if (saved) return;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const listener = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? "dark" : "light");
+    };
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToStateEvents(() => {
+      setStateRefreshToken((token) => token + 1);
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    function syncQueuedChanges() {
+      flushOfflineCommands()
+        .then(() => {
+          setIsOffline(false);
+          setStateRefreshToken((token) => token + 1);
+        })
+        .catch(() => undefined);
+    }
+
+    window.addEventListener("online", syncQueuedChanges);
+    syncQueuedChanges();
+    return () => window.removeEventListener("online", syncQueuedChanges);
   }, []);
 
   // Sync load cache immediately on date change/mount to prevent layout flash/hydration delay
@@ -83,7 +122,7 @@ export default function LifeRlApp() {
     } catch (e) {
       console.error("Failed to read state cache", e);
     }
-  }, [selectedDate]);
+  }, [selectedDate, stateRefreshToken]);
 
   useEffect(() => {
     const requestId = ++stateRequestId.current;
@@ -104,7 +143,7 @@ export default function LifeRlApp() {
           setIsOffline(true);
         }
       });
-  }, [selectedDate]);
+  }, [selectedDate, stateRefreshToken]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -269,6 +308,8 @@ export default function LifeRlApp() {
         onUpdateTask={updateTask}
         onRemoveTask={removeTask}
         onRestoreTask={restoreTask}
+        state={state}
+        onStateChange={updateStateAndCache}
       />
       <DayNotePanel date={state.date} note={state.dayNote} onSave={updateDayNote} />
       <NewQuestForm
@@ -279,6 +320,12 @@ export default function LifeRlApp() {
         onRewardChange={setReward}
         onSubmit={addTask}
       />
+    </section>
+  );
+
+  const pomodoroSection = (
+    <section className="min-w-0 space-y-6">
+      <PomodoroTimer state={state} onStateChange={updateStateAndCache} />
     </section>
   );
 
@@ -318,19 +365,56 @@ export default function LifeRlApp() {
         <StatStrip state={state} progress={progress} />
 
         {/* ── Desktop layout (lg+): chart left, habits right ── */}
-        <div className="hidden gap-6 py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)]">
+        <div className="hidden gap-6 py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
           {trendsSection}
-          {habitsSection}
+          <div className="space-y-4">
+            <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setDesktopRightTab("habits")}
+                className={`pb-2 px-4 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 ${
+                  desktopRightTab === "habits"
+                    ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                }`}
+              >
+                Habits
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesktopRightTab("pomodoro")}
+                className={`pb-2 px-4 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 ${
+                  desktopRightTab === "pomodoro"
+                    ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                }`}
+              >
+                Focus
+              </button>
+            </div>
+            {desktopRightTab === "habits" ? habitsSection : pomodoroSection}
+          </div>
         </div>
 
         {/* ── Mobile layout: single panel, with bottom nav ── */}
         <div className="pb-20 pt-4 lg:hidden">
-          {mobilePanel === "habits" ? habitsSection : trendsSection}
+          {mobilePanel === "habits" && habitsSection}
+          {mobilePanel === "trends" && trendsSection}
+          {mobilePanel === "pomodoro" && pomodoroSection}
         </div>
 
       </div>
 
       <MobileNav activePanel={mobilePanel} onPanelChange={setMobilePanel} />
+
+      <MiniPomodoroBanner
+        state={state}
+        onStateChange={updateStateAndCache}
+        onFocusTab={() => {
+          setMobilePanel("pomodoro");
+          setDesktopRightTab("pomodoro");
+        }}
+      />
     </main>
   );
 }

@@ -7,9 +7,9 @@ import {
   buildDailyData,
   buildTaskStats,
   buildVisibleDates,
-  linearSlope,
+  recentEmaSlope,
   resolveGranularity,
-  taskSlopeForDates,
+  taskEmaSlopeForDates,
 } from "../../lib/analytics";
 import { streaks } from "../../lib/chart";
 import type { ChartGranularity, ChartRange, ChartsState, LogEntry, Task } from "../../types";
@@ -95,6 +95,10 @@ export function ChartsPanel({
     () => buildVisibleDates(firstDate, currentDate, range, focusDate, customDays),
     [currentDate, customDays, firstDate, focusDate, range],
   );
+  const slopeDates = useMemo(
+    () => buildVisibleDates(firstDate, currentDate, "all"),
+    [currentDate, firstDate],
+  );
   const dailyData = useMemo(
     () =>
       buildDailyData({
@@ -103,6 +107,15 @@ export function ChartsPanel({
         entriesByDate: chartIndexes.entriesByDate,
       }),
     [chartIndexes.entriesByDate, dates, selectedTaskIds],
+  );
+  const slopeDailyData = useMemo(
+    () =>
+      buildDailyData({
+        dates: slopeDates,
+        selectedTaskIds,
+        entriesByDate: chartIndexes.entriesByDate,
+      }),
+    [chartIndexes.entriesByDate, selectedTaskIds, slopeDates],
   );
   const consistency = useMemo(
     () =>
@@ -113,17 +126,19 @@ export function ChartsPanel({
       }),
     [chartIndexes.entriesByTaskId, dates, taskOptions],
   );
-  const slopeDates = useMemo(() => dates.slice(-7), [dates]);
-  const totalSlope = useMemo(() => linearSlope(dailyData.slice(-7).map((day) => day.reward)), [dailyData]);
+  const totalSlope = useMemo(
+    () => recentEmaSlope(slopeDailyData.map((day) => day.reward), smoothing),
+    [slopeDailyData, smoothing],
+  );
   const taskSlopes = useMemo(() => {
     const slopes = new Map<string, number>();
 
     for (const task of taskOptions) {
-      slopes.set(task.id, taskSlopeForDates(task.id, slopeDates, chartIndexes.entriesByTaskId));
+      slopes.set(task.id, taskEmaSlopeForDates(task.id, slopeDates, chartIndexes.entriesByTaskId, smoothing));
     }
 
     return slopes;
-  }, [chartIndexes.entriesByTaskId, slopeDates, taskOptions]);
+  }, [chartIndexes.entriesByTaskId, slopeDates, smoothing, taskOptions]);
 
   const completeDays = dailyData.filter((day) => day.complete).length;
   const attemptedDays = dailyData.filter((day) => day.expected > 0).length;

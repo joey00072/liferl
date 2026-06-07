@@ -22,8 +22,25 @@ export type LogEntry = {
   completedAt: string;
 };
 
+export type PomodoroSession = {
+  id: string;
+  taskId?: string;
+  mode?: "focus" | "short_break" | "long_break";
+  startedAt: string;
+  endedAt?: string;
+  plannedSeconds: number;
+  actualSeconds?: number;
+  status: "running" | "completed" | "canceled" | "paused";
+  timingSource: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type State = {
   date: string;
+  version?: number;
+  serverTime?: string;
   dayNote?: string;
   mood?: number;
   energy?: number;
@@ -42,6 +59,8 @@ export type State = {
   archivedTasks: Task[];
   logs: LogEntry[];
   charts: ChartsState;
+  activeSession?: PomodoroSession | null;
+  pomodoroSessions?: PomodoroSession[];
 };
 
 export type DayPoint = {

@@ -1,8 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Archive, Check, NotebookPen, Pencil, RotateCcw, X } from "lucide-react";
+import { Archive, Check, NotebookPen, Pencil, RotateCcw, X, Timer } from "lucide-react";
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import type { Task } from "../../types";
+import type { Task, State } from "../../types";
+import { PomodoroTimer } from "./PomodoroTimer";
+import { startPomodoro } from "../../api";
 
 const DELETE_GRACE_MS = 12000;
 
@@ -15,6 +17,8 @@ export function QuestPanel({
   onUpdateTask,
   onRemoveTask,
   onRestoreTask,
+  state,
+  onStateChange,
 }: {
   date: string;
   tasks: Task[];
@@ -24,6 +28,8 @@ export function QuestPanel({
   onUpdateTask: (taskId: string, title: string, score: number, note: string) => Promise<void> | void;
   onRemoveTask: (taskId: string) => void;
   onRestoreTask: (taskId: string) => void;
+  state: State;
+  onStateChange: (next: State) => void;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -226,6 +232,24 @@ export function QuestPanel({
 
             {/* Edit / archive controls — quiet until hover */}
             <div className="flex shrink-0 items-center gap-0.5">
+              <Button
+                aria-label="Start Pomodoro"
+                title="Start Pomodoro focus session"
+                variant="ghost"
+                size="icon"
+                onClick={async (event) => {
+                  event.stopPropagation();
+                  try {
+                    const next = await startPomodoro(task.id, 1500, date);
+                    onStateChange(next);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                className="size-8 text-zinc-400 transition-opacity hover:text-emerald-500 sm:opacity-0 sm:group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-emerald-400"
+              >
+                <Timer className="size-3.5" />
+              </Button>
               <Button
                 aria-label="Edit task"
                 title="Edit task"

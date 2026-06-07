@@ -1,1 +1,1 @@
-export type MobilePanel = "habits" | "trends";
+export type MobilePanel = "habits" | "trends" | "pomodoro";

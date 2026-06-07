@@ -1,4 +1,5 @@
 import type { ChartEntry, ChartGranularity, ChartRange, DayPoint, LogEntry, Task, TaskStat } from "../types";
+import { emaBySmoothing } from "./chart";
 import { dateRange, formatMonth, formatShortDate } from "./date";
 
 export type ChartIndexes = {
@@ -176,7 +177,64 @@ export function linearSlope(values: number[]) {
   return denominator ? numerator / denominator : 0;
 }
 
+export function recentEmaSlope(values: number[], smoothing: number, window = 7) {
+  return linearSlope(emaBySmoothing(values, smoothing).slice(-window));
+}
+
+function rewardSeriesForDates(taskIds: string[], dates: string[], entriesByTaskId: Map<string, ChartEntry[]>) {
+  const taskEntryMaps = taskIds
+    .map((taskId) => {
+      const entries = entriesByTaskId.get(taskId) ?? [];
+      const firstDate = entries.reduce<string | undefined>(
+        (first, entry) => (first === undefined || entry.date < first ? entry.date : first),
+        undefined,
+      );
+
+      return {
+        firstDate,
+        entriesByDate: new Map(entries.map((entry) => [entry.date, entry.score])),
+      };
+    })
+    .filter((task) => task.firstDate !== undefined);
+
+  return dates.flatMap((date) => {
+    let hasActiveTask = false;
+    let reward = 0;
+
+    for (const task of taskEntryMaps) {
+      if (task.firstDate === undefined || date < task.firstDate) continue;
+      hasActiveTask = true;
+      reward += task.entriesByDate.get(date) ?? 0;
+    }
+
+    return hasActiveTask ? [reward] : [];
+  });
+}
+
+export function rewardSlopeForDates(taskIds: string[], dates: string[], entriesByTaskId: Map<string, ChartEntry[]>) {
+  return linearSlope(rewardSeriesForDates(taskIds, dates, entriesByTaskId));
+}
+
+export function rewardEmaSlopeForDates(
+  taskIds: string[],
+  dates: string[],
+  entriesByTaskId: Map<string, ChartEntry[]>,
+  smoothing: number,
+  window = 7,
+) {
+  return recentEmaSlope(rewardSeriesForDates(taskIds, dates, entriesByTaskId), smoothing, window);
+}
+
 export function taskSlopeForDates(taskId: string, dates: string[], entriesByTaskId: Map<string, ChartEntry[]>) {
-  const entriesByDate = new Map((entriesByTaskId.get(taskId) ?? []).map((entry) => [entry.date, entry.score]));
-  return linearSlope(dates.map((date) => entriesByDate.get(date) ?? 0));
+  return rewardSlopeForDates([taskId], dates, entriesByTaskId);
+}
+
+export function taskEmaSlopeForDates(
+  taskId: string,
+  dates: string[],
+  entriesByTaskId: Map<string, ChartEntry[]>,
+  smoothing: number,
+  window = 7,
+) {
+  return rewardEmaSlopeForDates([taskId], dates, entriesByTaskId, smoothing, window);
 }

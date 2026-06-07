@@ -164,7 +164,7 @@ export function LifeRlSkeleton() {
         </div>
 
         {/* Desktop Layout grid */}
-        <div className="hidden gap-6 py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)]">
+        <div className="hidden gap-6 py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
           {trendsSkeleton}
           {habitsSkeleton}
         </div>

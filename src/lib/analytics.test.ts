@@ -6,6 +6,7 @@ import {
   buildTaskStats,
   buildVisibleDates,
   linearSlope,
+  recentEmaSlope,
   resolveGranularity,
   taskSlopeForDates,
 } from "./analytics";
@@ -152,12 +153,19 @@ describe("analytics derived data", () => {
     expect(linearSlope([5, 5, 5])).toBe(0);
   });
 
-  test("calculates task slope over provided dates with missing entries as zero", () => {
+  test("calculates task slope after the first task entry with later missing entries as zero", () => {
     const indexes = buildChartIndexes(entries);
 
     expect(
       taskSlopeForDates("guitar", ["2026-01-01", "2026-01-02", "2026-01-03"], indexes.entriesByTaskId),
     ).toBe(25);
-    expect(taskSlopeForDates("gym", ["2026-01-01", "2026-01-02", "2026-01-03"], indexes.entriesByTaskId)).toBe(10);
+    expect(taskSlopeForDates("gym", ["2026-01-01", "2026-01-02", "2026-01-03"], indexes.entriesByTaskId)).toBe(-80);
+  });
+
+  test("calculates negative recent EMA slope when recent raw rewards are flat missed days", () => {
+    const rewards = [400, 300, 300, 300, 150, 400, 300, 400, 0, 0, 0, 0, 0, 0, 0];
+
+    expect(linearSlope(rewards.slice(-7))).toBe(0);
+    expect(recentEmaSlope(rewards, 0.82)).toBeLessThan(0);
   });
 });

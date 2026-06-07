@@ -1,4 +1,4 @@
-import { Check, TrendingUp } from "lucide-react";
+import { Check, TrendingUp, Timer } from "lucide-react";
 import type { ReactNode } from "react";
 import type { MobilePanel } from "./types";
 
@@ -25,6 +25,12 @@ export function MobileNav({
         label="Trends"
         icon={<TrendingUp className="size-5" />}
         onClick={() => onPanelChange("trends")}
+      />
+      <MobileNavTab
+        active={activePanel === "pomodoro"}
+        label="Focus"
+        icon={<Timer className="size-5" />}
+        onClick={() => onPanelChange("pomodoro")}
       />
     </nav>
   );
