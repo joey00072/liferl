@@ -2,9 +2,9 @@
 
 Schema id: `liferl.v1`
 
-This schema is for the Markdown content stored inside the `<records>` block in
-[liferl.md](../liferl.md). It is designed to be human-readable in Obsidian and
-simple for the app parser to handle.
+This schema is for the exported Markdown content stored inside the `<records>`
+block in [liferl.md](../liferl.md). It is designed to be human-readable in
+Obsidian and simple for the app parser to import on first boot.
 
 ## Example
 
@@ -59,7 +59,7 @@ schema: liferl.v1
 
 ## Top Level
 
-The record file must contain exactly one `<records>` block.
+The exported record file should contain exactly one `<records>` block.
 
 The first non-empty line inside `<records>` should be:
 
@@ -236,8 +236,8 @@ actually happened.
 Each day is a snapshot. A task can have a different title, target, category, or
 icon on a later day without changing old days.
 
-To edit the past, edit that specific day block. That intentionally changes
-history.
+SQLite is the primary data source. Editing exported Markdown is useful for
+manual archive review, but live app writes should go through the FastAPI API.
 
 To create a new day, copy the latest day block, change the date, reset scores
 and metrics, then edit targets if needed.

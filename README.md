@@ -1,10 +1,10 @@
 # LifeRL
 
-A markdown-backed vibe habit tracker to fix my life.
+A SQLite-backed vibe habit tracker to fix my life.
 
-LifeRL keeps the source of truth in `liferl.md`, so your habits, notes, scores,
-and history stay readable in Obsidian. The Next.js web UI talks to a FastAPI
-backend that edits the file and serves reward trends.
+LifeRL keeps the source of truth in a local SQLite database and exports
+`liferl.md` for Obsidian-readable cold storage. The Next.js web UI talks to a
+FastAPI backend that owns writes, server time, sync events, and Markdown export.
 
 ## Screenshots
 
@@ -37,6 +37,19 @@ Use a different Markdown file:
 
 ```sh
 LIFERL_RECORDS_PATH=/path/to/liferl.md bun run dev
+```
+
+Use a different SQLite database:
+
+```sh
+LIFERL_DB_PATH=/path/to/liferl.db bun run dev
+```
+
+Useful health checks:
+
+```sh
+curl http://127.0.0.1:5174/api/health
+curl "http://127.0.0.1:5174/api/state?date=2026-06-06"
 ```
 
 ## Install As PWA
@@ -80,7 +93,8 @@ On the VPS:
 git clone https://github.com/joey00072/liferl.git
 cd liferl
 bun install
-bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
+python3 -m pip install -r requirements.txt
+bun run service setup --db /srv/liferl/liferl.db --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
 bun run service:systemd:install
 ```
 
@@ -94,11 +108,18 @@ Keep the VPS firewall closed to the public internet for port `5173`.
 
 ## Data
 
-The database is [liferl.md](liferl.md). The parser reads the `<records>` block
-using the `liferl.v1` schema.
+The primary database is SQLite. By default it lives at `.liferl/liferl.db`.
+[liferl.md](liferl.md) is exported from the database after changes so the data
+stays readable in Obsidian, but the running app does not treat Markdown edits as
+live primary writes.
 
 Useful docs:
 
+- [Architecture](docs/architecture.md)
+- [API](docs/api.md)
+- [Data model](docs/data.md)
+- [Deployment](docs/deployment.md)
+- [Development guide](docs/development.md)
 - [Schema](docs/schema.md)
 - [Implementation notes](docs/todo.md)
 - [Docs index](docs/index.md)

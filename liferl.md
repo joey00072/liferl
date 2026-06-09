@@ -19,16 +19,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 0
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 0
 
 📅 2026-05-07
@@ -42,16 +42,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 0
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 0
 
 📅 2026-05-19
@@ -65,16 +65,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 0
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 0
 
 📅 2026-05-21
@@ -88,16 +88,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 0
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 0
 
 📅 2026-05-22
@@ -111,17 +111,17 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
     score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 0
 
 📅 2026-05-23
   🎯 guitar
@@ -134,16 +134,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 
 📅 2026-05-24
@@ -157,16 +157,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 
 📅 2026-05-25
@@ -180,17 +180,17 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
     score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 0
 
 📅 2026-05-26
   🎯 guitar
@@ -203,16 +203,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 
 📅 2026-05-27
@@ -226,17 +226,17 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
     score: 0
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 100
 
 📅 2026-05-28
   🎯 guitar
@@ -249,17 +249,17 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 0
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 0
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
     score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 0
 
 📅 2026-05-29
   🎯 guitar
@@ -272,16 +272,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 
 📅 2026-05-30
@@ -295,16 +295,16 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
-  🎯 work
-    icon: 💼
-    title: Work
-    category: career
-    score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 
 📅 2026-05-31
@@ -318,15 +318,84 @@ schema: liferl.v1
     title: Gym
     category: health
     score: 100
+  🎯 walk-10k-steps
+    icon: 🚶
+    title: Walk 10k steps
+    category: health
+    target: 10000 steps
+    score: 100
   🎯 work
     icon: 💼
     title: Work
     category: career
+    score: 100
+
+📅 2026-06-05
+  🎯 guitar
+    icon: 🎸
+    title: Guitar practice
+    category: skill
+    score: 100
+  🎯 gym
+    icon: 🏋️
+    title: Gym
+    category: health
     score: 100
   🎯 walk-10k-steps
     icon: 🚶
     title: Walk 10k steps
     category: health
     target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 100
+
+📅 2026-06-06
+  🎯 guitar
+    icon: 🎸
+    title: Guitar practice
+    category: skill
+    score: 100
+  🎯 gym
+    icon: 🏋️
+    title: Gym
+    category: health
+    score: 100
+  🎯 walk-10k-steps
+    icon: 🚶
+    title: Walk 10k steps
+    category: health
+    target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
+    score: 100
+
+📅 2026-06-07
+  🎯 guitar
+    icon: 🎸
+    title: Guitar practice
+    category: skill
+    score: 100
+  🎯 gym
+    icon: 🏋️
+    title: Gym
+    category: health
+    score: 100
+  🎯 walk-10k-steps
+    icon: 🚶
+    title: Walk 10k steps
+    category: health
+    target: 10000 steps
+    score: 100
+  🎯 work
+    icon: 💼
+    title: Work
+    category: career
     score: 100
 </records>

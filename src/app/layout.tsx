@@ -23,7 +23,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('liferl-theme') || 'light';
+                  const savedTheme = localStorage.getItem('liferl-theme');
+                  const theme = savedTheme ? savedTheme : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   const preset = localStorage.getItem('liferl-theme-preset') || 'rose';
                   
                   if (theme === 'dark') {

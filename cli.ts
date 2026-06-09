@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 type Config = {
   recordsPath: string;
+  databasePath?: string;
   port: number;
   apiPort?: number;
   host: string;
@@ -30,8 +31,8 @@ function usage() {
   console.log(`LifeRL CLI
 
 Usage:
-  bun run service setup              Ask for Markdown path, host, and port
-  bun run service setup --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
+  bun run service setup              Ask for SQLite path, Markdown path, host, and port
+  bun run service setup --db /srv/liferl/liferl.db --records /srv/liferl/liferl.md --host 0.0.0.0 --port 5173 --api-port 5174 --yes
   bun run service run                Run server in the foreground
   bun run service start              Start server in the background
   bun run service stop               Stop background server
@@ -46,6 +47,7 @@ Config:
   .liferl/config.json
 
 Env used by the server:
+  LIFERL_DB_PATH=/path/to/liferl.db
   LIFERL_RECORDS_PATH=/path/to/liferl.md
   PORT=5173
   LIFERL_API_PORT=5174
@@ -142,6 +144,10 @@ async function setup(options: Map<string, string | boolean>) {
   const recordsAnswer = optionString(options, "records") || optionString(options, "markdown");
   const recordsPath = path.resolve(expandHome(recordsAnswer || await ask(rl, `Markdown path [${defaultRecordsPath}]: `, defaultRecordsPath)));
 
+  const defaultDatabasePath = current?.databasePath ?? path.join(stateDir, "liferl.db");
+  const databaseAnswer = optionString(options, "db") || optionString(options, "database");
+  const databasePath = path.resolve(expandHome(databaseAnswer || await ask(rl, `SQLite path [${defaultDatabasePath}]: `, defaultDatabasePath)));
+
   const defaultHost = current?.host ?? "0.0.0.0";
   const host = optionString(options, "host") || await ask(rl, `Host [${defaultHost}]: `, defaultHost);
 
@@ -156,12 +162,14 @@ async function setup(options: Map<string, string | boolean>) {
   rl?.close();
 
   await fs.mkdir(path.dirname(recordsPath), { recursive: true });
+  await fs.mkdir(path.dirname(databasePath), { recursive: true });
   if (!fsSync.existsSync(recordsPath)) {
     await fs.writeFile(recordsPath, "[[life]] [[rl]] [[habit]]\n\n<records>\nschema: liferl.v1\n</records>\n", "utf8");
   }
 
   const config = {
     recordsPath,
+    databasePath,
     port,
     apiPort,
     host,
@@ -170,6 +178,7 @@ async function setup(options: Map<string, string | boolean>) {
   await writeConfig(config);
 
   console.log(`Config written: ${configPath}`);
+  console.log(`SQLite: ${databasePath}`);
   console.log(`Markdown: ${recordsPath}`);
   console.log(`URL: http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
   console.log(`API: http://${host === "0.0.0.0" ? "localhost" : host}:${apiPort}`);
@@ -179,6 +188,7 @@ async function setup(options: Map<string, string | boolean>) {
 function serverEnv(config: Config) {
   return {
     ...process.env,
+    LIFERL_DB_PATH: config.databasePath ?? path.join(stateDir, "liferl.db"),
     LIFERL_RECORDS_PATH: config.recordsPath,
     PORT: String(config.port),
     LIFERL_API_PORT: String(apiPort(config)),
@@ -268,6 +278,7 @@ async function status() {
   if (pid) console.log(`PID: ${pid}${running ? "" : " (stale)"}`);
   console.log(`Config: ${fsSync.existsSync(configPath) ? configPath : "missing"}`);
   if (config) {
+    console.log(`SQLite: ${config.databasePath ?? path.join(stateDir, "liferl.db")}`);
     console.log(`Markdown: ${config.recordsPath}`);
     console.log(`Frontend bind: ${config.host}:${config.port}`);
     console.log(`API bind: ${config.host}:${apiPort(config)}`);
@@ -288,13 +299,14 @@ async function logs() {
 
 function systemdUnit(config: Config) {
   return `[Unit]
-Description=LifeRL markdown-backed dashboard
+Description=LifeRL SQLite-backed dashboard
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory=${systemdQuote(rootDir)}
 Environment=${systemdQuote(`LIFERL_RECORDS_PATH=${config.recordsPath}`)}
+Environment=${systemdQuote(`LIFERL_DB_PATH=${config.databasePath ?? path.join(stateDir, "liferl.db")}`)}
 Environment=${systemdQuote(`PORT=${config.port}`)}
 Environment=${systemdQuote(`LIFERL_API_PORT=${apiPort(config)}`)}
 Environment=${systemdQuote(`API_INTERNAL_URL=http://127.0.0.1:${apiPort(config)}`)}

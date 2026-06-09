@@ -1,116 +1,91 @@
 # LifeRL Todo
 
-This file tracks remaining work only. The app already uses the `liferl.v1`
-day-based Markdown format as the main record format.
-
-## Current Bottlenecks
-
-`liferl.md` is still fine as the source of truth. The main remaining risks are:
-
-- full `<records>` rewrites on every save
-- limited correctness tests around parser and write/edit behavior
-- no weekly/monthly aggregation for very long history yet
+This file tracks remaining product and engineering work. SQLite is now primary;
+Markdown is export-only cold storage.
 
 ## Done
 
-- `liferl.v1` day-based Markdown parsing/rendering
-- legacy table migration into `liferl.v1`
-- chart source data emitted by the server from day blocks
-- chart range controls: `30d`, `90d`, `1y`, `all`
-- indexed chart aggregation instead of repeated `logs.filter(...)`
-- chart calculations include all `0..100` scores, not only completed tasks
-- focused tests for EMA and chart-derived stats
-- `.liferl/cache.json` app cache
-- source-hash cache invalidation
-- in-process mutation serialization
-- write-time external-change detection before saving
+- Split frontend/backend into Next.js and FastAPI.
+- SQLite primary database at `.liferl/liferl.db`.
+- First-boot Markdown import from `liferl.md`.
+- Debounced Markdown export back to `liferl.md`.
+- Server-authoritative time metadata.
+- Server-sent events at `/api/events`.
+- Offline command queue in the browser.
+- Idempotent command batch endpoint.
+- Day-based `liferl.v1` Markdown parsing/rendering.
+- Legacy table import into `liferl.v1`.
+- Chart source data emitted by the server from day snapshots.
+- Chart range controls: `30d`, `90d`, `1y`, `all`.
+- Indexed chart aggregation instead of repeated `logs.filter(...)`.
+- Chart calculations include all `0..100` scores, not only completed tasks.
+- Focused tests for EMA and chart-derived stats.
+- Pomodoro SQLite table reserved for future UI.
 
-## Priority 1: More Correctness Tests
+## Priority 1: Storage Correctness Tests
 
-Add tests before write optimization gets more complex.
+Add focused backend tests around persistence and command behavior.
 
 Test cases:
 
-- parsing `liferl.v1` day blocks
-- rendering `liferl.v1` without losing day/task fields
-- multiline day notes
-- multiline task notes
-- toggling today changes today's score only
-- editing a past day does not mutate other days
-- changing a task title today does not rewrite old day snapshots
-- deleting a task today does not delete old records
-- empty days count correctly in streaks
-- editing a past day recomputes streak from that day forward
-- editing a past day recomputes EMA from that day forward
+- import `liferl.v1` Markdown into SQLite.
+- import legacy table Markdown into SQLite.
+- export SQLite state back to Markdown.
+- preserve text outside `<records>` during export.
+- repeated command ID does not apply twice.
+- failed command is logged as failed.
+- toggling a past date changes only that date.
+- editing a task snapshot does not mutate older day snapshots.
+- archiving a task preserves historical rows.
+- `state_version` increments exactly once per successful new command.
 
-Correctness tests should use small Markdown fixtures that are easy to read.
+## Priority 2: Real Pomodoro
 
-## Priority 2: Efficient Recompute
+The schema exists, but the app needs API and UI.
 
-Raw Markdown records are truth. Derived stats are disposable.
+Needed:
 
-When a day changes, recompute:
+- start session route.
+- stop session route.
+- cancel session route.
+- list sessions for day/task.
+- active session state in `GET /api/state`.
+- server-time reconciliation for devices with wrong clocks.
+- SSE event when sessions start/stop.
+- clear UX for work/break/session history.
 
-- that day total
-- that day completion flags
-- affected task totals
-- affected task completion counts
-- streaks from that day forward
-- EMA from that day forward
+## Priority 3: Sync Hardening
 
-Reason: daily totals are local, but streaks and EMA depend on previous days and
-can affect later days.
+The current sync model is good enough for a single-user app, but needs more
+edge-case handling before relying on it heavily across devices.
 
-When a task definition changes, recompute:
+Needed:
 
-- today state
-- task labels/categories in chart filters
-- task stats for that task
+- visible offline queue count.
+- retry/backoff status.
+- conflict notes for commands that fail after reconnect.
+- optional `since_version` catch-up behavior for SSE reconnects.
+- CORS/deployment docs for non-same-origin API setups.
+- basic auth or private-network assumptions made explicit in UI/docs.
 
-Past days already keep snapshots in `liferl.v1`, so changing today's title,
-target, icon, or category should not change old days unless the user edits those
-old days directly.
+## Priority 4: Backend Query Efficiency
 
-## Priority 3: Partial Day Writes
+Current writes load and rewrite the domain store from SQLite. This is simple and
+works for small personal data, but later the backend should mutate affected rows
+directly.
 
-Current writes still replace the whole `<records>` block.
+Future direction:
 
-Later, update only the affected day block:
+- command handlers update only affected `day_entries` and `task_day_entries`.
+- chart responses query only the needed date range.
+- long-history summaries use weekly/monthly aggregation.
+- Markdown export can still render from all rows when needed.
 
-- find `📅 YYYY-MM-DD`
-- replace only that day block
-- preserve unrelated days exactly
-- preserve unknown fields where possible
-- preserve manual Obsidian edits outside `<records>`
+## Priority 5: More UI Polish
 
-This reduces write size and makes manual edits safer.
-
-## Priority 4: Long History Aggregates
-
-Do not delete old raw records, but the UI does not need to process all old detail
-for every view.
-
-Future strategy:
-
-- keep raw daily records in `liferl.md`
-- precompute monthly summaries in cache
-- show exact daily detail for recent ranges
-- show weekly/monthly aggregates for long ranges
-
-## Storage Decision
-
-Stay with Markdown until one of these becomes true:
-
-- the file is above 10-20 MB and edits feel slow in Obsidian
-- writes become noticeably slow
-- conflict handling becomes painful
-- queries become complex enough that cache/index code feels like a database
-
-Until then, optimize write size and long-history aggregation first.
-
-## Implementation Order
-
-1. Add parser/render/write correctness tests.
-2. Implement efficient recompute from the changed day forward.
-3. Implement day-block partial writes.
-4. Add weekly/monthly aggregation for long chart ranges.
+- expose mood, energy, sleep, and weight controls.
+- improve archived task management.
+- show server sync status and last sync time.
+- show server date/time if device date looks wrong.
+- add keyboard-friendly fast habit toggling.
+- add richer mobile install/onboarding hints.

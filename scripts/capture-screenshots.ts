@@ -7,8 +7,8 @@ const outputDir = path.resolve("docs/screenshots");
 
 async function waitForApp(page: Page) {
   await page.goto(baseUrl);
-  await page.waitForLoadState("networkidle");
-  await page.getByText("LifeRL", { exact: true }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.waitForLoadState("domcontentloaded");
+  await page.getByRole("heading", { name: "Habits" }).first().waitFor({ state: "visible", timeout: 10_000 });
 }
 
 async function capture(page: Page, name: string) {

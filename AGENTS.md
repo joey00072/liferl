@@ -2,7 +2,7 @@
 
 ## Project
 
-LifeRL is a split Next.js + FastAPI dashboard for daily habits. The source of truth is plain markdown in `liferl.md`, inside the `<records>...</records>` block, so the data remains usable from Obsidian.
+LifeRL is a split Next.js + FastAPI dashboard for daily habits. The source of truth is SQLite, with `liferl.md` exported from the database as Obsidian-readable cold storage.
 
 ## Commands
 
@@ -17,35 +17,57 @@ The local app runs at `http://localhost:5173` by default. FastAPI runs at `http:
 
 ## Data Contract
 
-`backend/main.py` owns all markdown persistence. The frontend should only call the FastAPI routes and should not write `liferl.md` directly from the browser.
+`backend/main.py` owns all persistence. The frontend should only call the FastAPI routes and should not write `liferl.md` or the SQLite database directly from the browser.
 
-Inside `liferl.md`, keep this shape:
+SQLite is primary:
+
+- Default DB path: `.liferl/liferl.db`
+- Override DB path: `LIFERL_DB_PATH=/path/to/liferl.db`
+- Markdown export path: `LIFERL_RECORDS_PATH=/path/to/liferl.md`
+- On first boot with an empty DB, the backend imports existing `liferl.md`.
+- After mutations, the backend periodically exports a Markdown snapshot.
+- Markdown is export/cold storage, not live bidirectional sync.
+
+Inside exported `liferl.md`, keep this shape:
 
 ```md
 <records>
-## Tasks
-| id | title | reward | createdAt | active |
-| --- | --- | ---: | --- | --- |
+schema: liferl.v1
 
-## Daily Log
-| date | taskId | reward | completedAt |
-| --- | --- | ---: | --- |
+📅 2026-05-31
+  mood: 7
+  energy: 6
+  📝 Day note
+
+  🎯 guitar
+    icon: 🎸
+    title: Guitar practice
+    category: skill
+    target: 20 min
+    score: 70
+    metric: 15 min
 </records>
 ```
 
 Rules:
 
-- `Tasks` rows define habits/goals.
-- `Daily Log` rows define completions.
-- Deleting a task means setting `active` to `false`, not removing history.
-- Editing a task should update the task title/reward only; old log rows remain historical.
+- Day blocks define daily snapshots.
+- Task blocks define that day's habit state.
+- Archiving a task marks future/current snapshots archived without removing history.
+- Editing a task changes the selected day's snapshot; old day snapshots remain historical.
 - `liferl.md` is ignored by Next webpack watch in `next.config.ts` to prevent reload loops where supported.
+- Server time is authoritative for audit timestamps and sync metadata.
+- Browser offline writes are queued as commands and flushed back to FastAPI when connectivity returns.
 
 ## API
 
 Current local endpoints:
 
 - `GET /api/state`
+- `GET /api/time`
+- `GET /api/events`
+- `POST /api/commands/batch`
+- `GET /api/commands/:id`
 - `POST /api/tasks`
 - `POST /api/tasks/:id/toggle`
 - `PATCH /api/tasks/:id`
@@ -94,6 +116,17 @@ Prefer:
 - `src/types.ts`: shared app types.
 - `src/api.ts`: frontend API wrapper.
 - `next.config.ts`: proxies `/api/*` requests to FastAPI.
+
+## Docs
+
+- `docs/index.md`: documentation map.
+- `docs/architecture.md`: storage, sync, frontend/backend responsibilities.
+- `docs/api.md`: FastAPI routes, command payloads, SSE events.
+- `docs/data.md`: SQLite tables, Markdown import/export, backup notes.
+- `docs/deployment.md`: local, service, systemd, VPS, PWA setup.
+- `docs/development.md`: workflow, file map, verification, mutation checklist.
+- `docs/schema.md`: exported `liferl.v1` Markdown format.
+- `docs/todo.md`: current roadmap and remaining work.
 
 ## EMA Semantics
 

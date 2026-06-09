@@ -2,7 +2,7 @@
   "name": "liferl",
   "version": "1.0.0",
   "private": false,
-  "description": "A markdown-backed vibe habit tracker to fix your life.",
+  "description": "A SQLite-backed vibe habit tracker with Obsidian Markdown export.",
   "scripts": {
     "dev": "bun run scripts/dev.mjs",
     "dev:web": "next dev --webpack -H 0.0.0.0 -p 5173",
